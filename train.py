@@ -32,21 +32,31 @@ def flow2rgb(flow_map_np):
     return rgb_map.clip(0, 1)
 
 def train(model, local_rank):
+    # Specify log location
     log_path = 'train_log'
     if local_rank == 0:
         writer = SummaryWriter(log_path + '/train')
         writer_val = SummaryWriter(log_path + '/validate')
     else:
         writer, writer_val = None, None
+
+    # arguments
     step = 0
     nr_eval = 0
+
+    # Load training dataset
     dataset = VimeoDataset('train')
     sampler = DistributedSampler(dataset)
     train_data = DataLoader(dataset, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
     args.step_per_epoch = train_data.__len__()
+
+    # Load validation dataset
     dataset_val = VimeoDataset('validation')
     val_data = DataLoader(dataset_val, batch_size=16, pin_memory=True, num_workers=8)
+
+    # Eval model
     evaluate(model, val_data, nr_eval, local_rank, writer_val)
+
     model.save_model(log_path, local_rank)
     print('training...')
     time_stamp = time.time()
@@ -136,21 +146,29 @@ def evaluate(model, val_data, nr_eval, local_rank, writer_val):
         writer_val.add_scalar('psnr', np.array(psnr_list).mean(), nr_eval)
         
 if __name__ == "__main__":    
+
+    # Arguments
     parser = argparse.ArgumentParser(description='slomo')
     parser.add_argument('--epoch', default=300, type=int)
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size')
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=4, type=int, help='world size')
     args = parser.parse_args()
+
     torch.distributed.init_process_group(backend="nccl", world_size=args.world_size)
     torch.cuda.set_device(args.local_rank)
     device = torch.device("cuda", args.local_rank)
+
+    # set seeds
     seed = 1234
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
+
+    # Compose the model (RIFE)
     model = Model(args.local_rank)
+
+    # train the mode
     train(model, args.local_rank)
-        

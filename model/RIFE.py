@@ -122,16 +122,23 @@ class FusionNet(nn.Module):
 
 class Model:
     def __init__(self, local_rank=-1):
+
+        # Define all networks
         self.flownet = IFNet()
         self.contextnet = ContextNet()
         self.fusionnet = FusionNet()
+
+        # send networks to device
         self.device()
         self.optimG = AdamW(itertools.chain(
             self.flownet.parameters(),
             self.contextnet.parameters(),
             self.fusionnet.parameters()), lr=1e-6, weight_decay=1e-5)
+
+        # Sets the learning rate of each parameter group according to cyclical learning rate policy (CLR). 
         self.schedulerG = optim.lr_scheduler.CyclicLR(
             self.optimG, base_lr=1e-6, max_lr=1e-3, step_size_up=8000, cycle_momentum=False)
+
         self.epe = EPE()
         self.ter = Ternary()
         self.sobel = SOBEL()
