@@ -11,3 +11,6 @@ test/
 *.npz
 
 *.zip
+
+.vimspector.json
+.vscode/
