@@ -1,6 +1,7 @@
 *.pyc
 *.py~
 *.py#
+*.png
 
 *.pkl
 output/*
