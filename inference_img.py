@@ -1,3 +1,4 @@
+import subprocess
 import os
 import cv2
 import torch
@@ -16,6 +17,7 @@ if torch.cuda.is_available():
 parser = argparse.ArgumentParser(description='Interpolation for a pair of images')
 parser.add_argument('--img', dest='img', nargs=2, required=True)
 parser.add_argument('--ref', required=True)
+parser.add_argument('--output', default="output", type=str, required=False)
 parser.add_argument('--exp', default=4, type=int)
 parser.add_argument('--ratio', default=0, type=float, help='inference ratio between two images with 0 - 1 range')
 parser.add_argument('--rthreshold', default=0.02, type=float, help='returns image when actual ratio falls in given range threshold')
@@ -90,10 +92,16 @@ else:
         tmp.append(img1)
         img_list = tmp
 
-if not os.path.exists('output'):
-    os.mkdir('output')
+if not os.path.exists(args.output):
+    os.mkdir(args.output)
 for i in range(len(img_list)):
     if args.img[0].endswith('.exr') and args.img[1].endswith('.exr'):
-        cv2.imwrite('output/img{}.exr'.format(i), (img_list[i][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
+        cv2.imwrite(args.output+'/img{}.exr'.format(i), (img_list[i][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
     else:
-        cv2.imwrite('output/img{}.png'.format(i), (img_list[i][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
+        cv2.imwrite(args.output+'/img{}.png'.format(i), (img_list[i][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
+        subprocess.call(['ffmpeg', 
+                         "-i", args.output+'/img{}.png'.format(i),
+                         "-pix_fmt", "yuv420p",
+                         args.output+'/img{}.yuv'.format(i),
+                         "-hide_banner",
+                         "-loglevel", "error"])

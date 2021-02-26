@@ -195,27 +195,19 @@ class Model:
             return pred
 
     def inference(self, img0, img1, ref, UHD=False):
-        print("images shape")
-        print(img0.shape)
-        print(img1.shape)
-        print(ref.shape)
-
-        print("concat images shape")
         imgs = torch.cat((img0, img1), 1)
-        print(imgs.shape)
         img0r = torch.cat((img0, ref), 1)
-        print(img0r.shape)
         img1r = torch.cat((ref, img1), 1)
-        print(img1r.shape)
 
-        print("flow shape")
-        flow, _ = self.flownet(imgs, UHD)
-        print(flow.shape)
+        # flow, _ = self.flownet(imgs, UHD)
         flow0r, _ = self.flownet(img0r, UHD)
-        print(flow0r.shape)
         flow1r, _ = self.flownet(img1r, UHD)
-        print(flow1r.shape)
-        return self.predict(imgs, flow, training=False, UHD=UHD)
+
+        flowsum = torch.cat((flow0r, flow1r), 1)
+        finalflow = F.interpolate(flow, scale_factor=1, mode="bilinear", align_corners=False)
+
+
+        return self.predict(imgs, finalflow, training=False, UHD=UHD)
 
     def update(self, imgs, gt, learning_rate=0, mul=1, training=True, flow_gt=None):
         for param_group in self.optimG.param_groups:
