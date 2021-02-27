@@ -94,6 +94,11 @@ else:
 
 if not os.path.exists(args.output):
     os.mkdir(args.output)
+
+# original_name_0 = os.path.basename(args.img[0])
+# original_name_1 = os.path.basename(ref)
+# original_name_2 = os.path.basename(args.img[1])
+
 for i in range(len(img_list)):
     if args.img[0].endswith('.exr') and args.img[1].endswith('.exr'):
         cv2.imwrite(args.output+'/img{}.exr'.format(i), (img_list[i][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])

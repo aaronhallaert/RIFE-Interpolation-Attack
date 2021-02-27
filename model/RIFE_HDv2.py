@@ -1,3 +1,5 @@
+from liteflownet.liteflowrun import estimate as liteflow_estimate
+import PIL
 import torch
 import torch.nn as nn
 import numpy as np
@@ -9,6 +11,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from model.IFNet_HDv2 import *
 import torch.nn.functional as F
 from model.loss import *
+
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -196,18 +200,39 @@ class Model:
 
     def inference(self, img0, img1, ref, UHD=False):
         imgs = torch.cat((img0, img1), 1)
-        img0r = torch.cat((img0, ref), 1)
-        img1r = torch.cat((ref, img1), 1)
+        print(img0.shape)
+        print(img1.shape)
+        # img0r = torch.cat((img0, ref), 1)
+        # img1r = torch.cat((ref, img1), 1)
 
-        # flow, _ = self.flownet(imgs, UHD)
-        flow0r, _ = self.flownet(img0r, UHD)
-        flow1r, _ = self.flownet(img1r, UHD)
+        flow, _ = self.flownet(imgs, UHD)
+        print("shape of original flow"+str(flow.shape))
+        scaled_img0 = F.interpolate(img0, scale_factor=0.5, mode="bilinear",
+                                    align_corners=False)
+        scaled_img1 = F.interpolate(img1, scale_factor=0.5, mode="bilinear",
+                                    align_corners=False)
+        scaled_ref = F.interpolate(ref, scale_factor=0.5, mode="bilinear",
+                                   align_corners=False)
+        
+        flowr0 = liteflow_estimate(scaled_ref, scaled_img0)
+        flowr0 = torch.transpose(flowr0, 2, 1).to(device).unsqueeze(0)
+        flowr1 = liteflow_estimate(scaled_img1, scaled_ref)
+        flowr1 = (torch.transpose(flowr1, 2, 1)).to(device).unsqueeze(0)
 
-        flowsum = torch.cat((flow0r, flow1r), 1)
-        finalflow = F.interpolate(flow, scale_factor=1, mode="bilinear", align_corners=False)
+        totalflow = torch.cat((flowr0, flowr1),1)
+        # totalflow = F.interpolate(totalflow, scale_factor=0.25, mode="bilinear",
+        #                           align_corners=False)
+        print("shape of new flow"+str(totalflow.shape))
 
 
-        return self.predict(imgs, finalflow, training=False, UHD=UHD)
+        # flow0r, _ = self.flownet(img0r, UHD)
+        # flow1r, _ = self.flownet(img1r, UHD)
+
+        # flowsum = torch.cat((flow0r, flow1r), 1)
+        # finalflow = F.interpolate(flow, scale_factor=1, mode="bilinear", align_corners=False)
+
+
+        return self.predict(imgs, totalflow, training=False, UHD=UHD)
 
     def update(self, imgs, gt, learning_rate=0, mul=1, training=True, flow_gt=None):
         for param_group in self.optimG.param_groups:
