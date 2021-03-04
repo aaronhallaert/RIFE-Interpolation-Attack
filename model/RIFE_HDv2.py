@@ -201,27 +201,37 @@ class Model:
     def inference(self, img0, img1, ref, UHD=False):
         print(img0.shape)
         print(img1.shape)
-        imgs = torch.cat((img0, img1), 1)
+        print(ref.shape)
 
+        imgs = torch.cat((img0, img1), 1)
+        imgs0 = torch.cat((img0, ref), 1)
+        imgs1 = torch.cat((ref, img1), 1)
+
+        flow0, _ = self.flownet(imgs0, UHD)
+        flow1, _ = self.flownet(imgs1, UHD)
+        print(flow0.shape)
+        print(flow1.shape)
+
+        flow0 = flow0[:, :2, :, :]
+        flow1 = flow1[:, 2:, :, :]
+        print(flow0.shape)
+        print(flow1.shape)
+
+        totalflow = torch.cat((flow0, flow1), 1)
         flow, _ = self.flownet(imgs, UHD)
         print("shape of original flow"+str(flow.shape))
-        scaled_img0 = F.interpolate(img0, scale_factor=0.5, mode="bilinear",
-                                    align_corners=False)
-        scaled_img1 = F.interpolate(img1, scale_factor=0.5, mode="bilinear",
-                                    align_corners=False)
-        scaled_ref = F.interpolate(ref, scale_factor=0.5, mode="bilinear",
-                                   align_corners=False)
+
         
-        flow0r = liteflow_estimate(scaled_ref, scaled_img0)
-        flow0r = torch.transpose(flow0r, 2, 1).to(device).unsqueeze(0)
+        # flow0r = liteflow_estimate(ref, img0)
+        # flow0r = torch.transpose(flow0r, 2, 1).unsqueeze(0)
 
-        flowr1 = liteflow_estimate(scaled_ref, scaled_img1)
-        flowr1 = (torch.transpose(flowr1, 2, 1)).to(device).unsqueeze(0)
+        # flowr1 = liteflow_estimate(ref, img1)
+        # flowr1 = (torch.transpose(flowr1, 2, 1)).unsqueeze(0)
 
-        totalflow = torch.cat((flow0r, flowr1),1)
+        # totalflow = torch.cat((flow0r, flowr1),1)
 
-        # totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)*2
-        totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
+        # totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)/2
+        # totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
         print("shape of new flow"+str(totalflow.shape))
 
         return self.predict(imgs, totalflow, training=False, UHD=UHD)
