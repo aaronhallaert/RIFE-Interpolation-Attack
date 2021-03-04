@@ -342,11 +342,11 @@ def estimate(tenFirst, tenSecond):
                 netNetwork = Network().cuda().eval()
         # end
 
-        assert(tenFirst.shape[3] == tenSecond.shape[3])
         assert(tenFirst.shape[2] == tenSecond.shape[2])
+        assert(tenFirst.shape[1] == tenSecond.shape[1])
 
+        intHeight = tenFirst.shape[1]
         intWidth = tenFirst.shape[2]
-        intHeight = tenFirst.shape[3]
 
         # assert(intWidth == 1024) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
         # assert(intHeight == 436) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
