@@ -199,11 +199,9 @@ class Model:
             return pred
 
     def inference(self, img0, img1, ref, UHD=False):
-        imgs = torch.cat((img0, img1), 1)
         print(img0.shape)
         print(img1.shape)
-        # img0r = torch.cat((img0, ref), 1)
-        # img1r = torch.cat((ref, img1), 1)
+        imgs = torch.cat((img0, img1), 1)
 
         flow, _ = self.flownet(imgs, UHD)
         print("shape of original flow"+str(flow.shape))
@@ -214,23 +212,17 @@ class Model:
         scaled_ref = F.interpolate(ref, scale_factor=0.5, mode="bilinear",
                                    align_corners=False)
         
-        flowr0 = liteflow_estimate(scaled_ref, scaled_img0)
-        flowr0 = torch.transpose(flowr0, 2, 1).to(device).unsqueeze(0)
-        flowr1 = liteflow_estimate(scaled_img1, scaled_ref)
+        flow0r = liteflow_estimate(scaled_ref, scaled_img0)
+        flow0r = torch.transpose(flow0r, 2, 1).to(device).unsqueeze(0)
+
+        flowr1 = liteflow_estimate(scaled_ref, scaled_img1)
         flowr1 = (torch.transpose(flowr1, 2, 1)).to(device).unsqueeze(0)
 
-        totalflow = torch.cat((flowr0, flowr1),1)
-        # totalflow = F.interpolate(totalflow, scale_factor=0.25, mode="bilinear",
-        #                           align_corners=False)
+        totalflow = torch.cat((flow0r, flowr1),1)
+
+        totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)*2
+        totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
         print("shape of new flow"+str(totalflow.shape))
-
-
-        # flow0r, _ = self.flownet(img0r, UHD)
-        # flow1r, _ = self.flownet(img1r, UHD)
-
-        # flowsum = torch.cat((flow0r, flow1r), 1)
-        # finalflow = F.interpolate(flow, scale_factor=1, mode="bilinear", align_corners=False)
-
 
         return self.predict(imgs, totalflow, training=False, UHD=UHD)
 

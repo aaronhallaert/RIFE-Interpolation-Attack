@@ -342,6 +342,8 @@ def estimate(tenFirst, tenSecond):
                 netNetwork = Network().cuda().eval()
         # end
 
+        tenFirst = tenFirst.squeeze(0)
+        tenSecond = tenSecond.squeeze(0)
         assert(tenFirst.shape[2] == tenSecond.shape[2])
         assert(tenFirst.shape[1] == tenSecond.shape[1])
 
