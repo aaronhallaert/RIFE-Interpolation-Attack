@@ -218,6 +218,7 @@ class Model:
         print(flow1.shape)
 
         totalflow = torch.cat((flow0, flow1), 1)
+        totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
         flow, _ = self.flownet(imgs, UHD)
         print("shape of original flow"+str(flow.shape))
 
@@ -229,8 +230,8 @@ class Model:
         # flowr1 = (torch.transpose(flowr1, 2, 1)).unsqueeze(0)
 
         # totalflow = torch.cat((flow0r, flowr1),1)
+        # totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)/2
 
-        # totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)/2
         # totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
         print("shape of new flow"+str(totalflow.shape))
 
