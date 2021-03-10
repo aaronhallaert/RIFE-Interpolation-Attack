@@ -95,18 +95,24 @@ else:
 if not os.path.exists(args.output):
     os.mkdir(args.output)
 
-# original_name_0 = os.path.basename(args.img[0])
-# original_name_1 = os.path.basename(ref)
-# original_name_2 = os.path.basename(args.img[1])
+first_frame_name=str(os.path.basename(os.path.splitext(args.img[0])[0])).replace("img","")
+name_length=len(first_frame_name)
+first_frame = int(first_frame_name)
+middle_frame = int(str(os.path.basename(os.path.splitext(args.ref)[0])).replace("img",""))
+last_frame = int(str(os.path.basename(os.path.splitext(args.img[1])[0])).replace("img",""))
 
-for i in range(len(img_list)):
+frames= [first_frame, middle_frame, last_frame]
+
+# only output the interpolated frames
+for idx in range(0, 3):
     if args.img[0].endswith('.exr') and args.img[1].endswith('.exr'):
-        cv2.imwrite(args.output+'/img{}.exr'.format(i), (img_list[i][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
+        cv2.imwrite(args.output+'/{0:03d}.exr'.format(frames[idx]), (img_list[idx][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
     else:
-        cv2.imwrite(args.output+'/img{}.png'.format(i), (img_list[i][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
-        subprocess.call(['ffmpeg', 
-                         "-i", args.output+'/img{}.png'.format(i),
-                         "-pix_fmt", "yuv420p",
-                         args.output+'/img{}.yuv'.format(i),
-                         "-hide_banner",
-                         "-loglevel", "error"])
+        if not os.path.isfile(args.output+'/{0:03d}.png'.format(i)):
+            cv2.imwrite(args.output+'/{0:03d}.png'.format(frames[idx]), (img_list[idx][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
+            # subprocess.call(['ffmpeg', 
+            #                  "-i", args.output+'/img{0:03d}.png'.format(frames[idx]),
+            #                  "-pix_fmt", "yuv420p",
+            #                  args.output+'/img{0:03d}.yuv'.format(frames[idx]),
+            #                  "-hide_banner",
+            #                  "-loglevel", "error"])

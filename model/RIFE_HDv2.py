@@ -199,14 +199,14 @@ class Model:
             return pred
 
     def inference(self, img0, img1, ref, UHD=False):
-        print(img0.shape)
-        print(img1.shape)
-        print(ref.shape)
+        # print(img0.shape)
+        # print(img1.shape)
+        # print(ref.shape)
 
         ### original flow without reference frame (RIFE)
         imgs = torch.cat((img0, img1), 1)
-        flow, _ = self.flownet(imgs, UHD)
-        print("shape of original flow"+str(flow.shape))
+        # flow, _ = self.flownet(imgs, UHD)
+        # print("shape of original flow"+str(flow.shape))
 
 
         ### compute flow with reference frame (RIFE)
@@ -218,8 +218,8 @@ class Model:
         flow0 = flow0[:, :2, :, :]
         flow1 = flow1[:, 2:, :, :]
         # check if flow is right shape
-        print(flow0.shape)
-        print(flow1.shape)
+        # print(flow0.shape)
+        # print(flow1.shape)
 
         totalflow = torch.cat((flow0, flow1), 1)
         totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
@@ -236,7 +236,7 @@ class Model:
         # totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)
 
         # totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
-        print("shape of new flow"+str(totalflow.shape))
+        # print("shape of new flow"+str(totalflow.shape))
 
         return self.predict(imgs, totalflow, training=False, UHD=UHD)
 
