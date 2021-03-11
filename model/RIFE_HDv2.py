@@ -1,4 +1,4 @@
-from liteflownet.liteflowrun import estimate as liteflow_estimate
+from liteflownet.liteflowrun_method import estimate as liteflow_estimate
 import PIL
 import torch
 import torch.nn as nn
@@ -202,14 +202,14 @@ class Model:
         # print(img0.shape)
         # print(img1.shape)
         # print(ref.shape)
-
-        ### original flow without reference frame (RIFE)
         imgs = torch.cat((img0, img1), 1)
+
+        ### original flow without reference frame (RIFE) ###
         # flow, _ = self.flownet(imgs, UHD)
         # print("shape of original flow"+str(flow.shape))
 
 
-        ### compute flow with reference frame (RIFE)
+        ### compute flow with reference frame (RIFE) ###
         imgs0 = torch.cat((img0, ref), 1)
         imgs1 = torch.cat((ref, img1), 1)
 
@@ -217,14 +217,11 @@ class Model:
         flow1, _ = self.flownet(imgs1, UHD)
         flow0 = flow0[:, :2, :, :]
         flow1 = flow1[:, 2:, :, :]
-        # check if flow is right shape
-        # print(flow0.shape)
-        # print(flow1.shape)
 
         totalflow = torch.cat((flow0, flow1), 1)
         totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
 
-        ### compute flow with pytorch-liteflownet
+        ### compute flow with pytorch-liteflownet ###
         
         # flow0r = liteflow_estimate(ref, img0)
         # flow0r = torch.transpose(flow0r, 2, 1).unsqueeze(0)

@@ -6,6 +6,7 @@ import argparse
 from torch.nn import functional as F
 from model.RIFE_HDv2 import Model
 import warnings
+
 warnings.filterwarnings("ignore")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
