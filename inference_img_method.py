@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from model.RIFE_HDv2 import Model
 import warnings
 
-def interpolate_images(img0_path, img1_path, ref_path, output_path, exp, ratio=0, rthreshold=0.02 ,rmaxcycles=8):
+def interpolate_images(img0_path, img1_path, ref_path, output_path, exp, mode=0, ratio=0, rthreshold=0.02 ,rmaxcycles=8):
     warnings.filterwarnings("ignore")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -59,7 +59,7 @@ def interpolate_images(img0_path, img1_path, ref_path, output_path, exp, ratio=0
             tmp_img1 = img1
             tmp_ref = ref
             for inference_cycle in range(rmaxcycles):
-                middle = model.inference(tmp_img0, tmp_img1, tmp_ref)
+                middle = model.inference(tmp_img0, tmp_img1, tmp_ref, mode)
                 middle_ratio = ( img0_ratio + img1_ratio ) / 2
                 if ratio - (rthreshold / 2) <= middle_ratio <= ratio + (rthreshold / 2):
                     break
@@ -77,7 +77,7 @@ def interpolate_images(img0_path, img1_path, ref_path, output_path, exp, ratio=0
         for i in range(exp):
             tmp = []
             for j in range(len(img_list) - 1):
-                mid = model.inference(img_list[j], img_list[j + 1], ref)
+                mid = model.inference(img_list[j], img_list[j + 1], ref, mode)
                 tmp.append(img_list[j])
                 tmp.append(mid)
             tmp.append(img1)

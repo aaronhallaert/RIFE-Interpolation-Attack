@@ -198,44 +198,44 @@ class Model:
         else:
             return pred
 
-    def inference(self, img0, img1, ref, UHD=False):
-        # print(img0.shape)
-        # print(img1.shape)
-        # print(ref.shape)
+    def inference(self, img0, img1, ref, mode=0, UHD=False):
         imgs = torch.cat((img0, img1), 1)
 
         ### original flow without reference frame (RIFE) ###
-        # flow, _ = self.flownet(imgs, UHD)
-        # print("shape of original flow"+str(flow.shape))
+        if mode==0:
+            flow, _ = self.flownet(imgs, UHD)
+            return self.predict(imgs, flow, training=False, UHD=UHD)
 
 
         ### compute flow with reference frame (RIFE) ###
-        imgs0 = torch.cat((img0, ref), 1)
-        imgs1 = torch.cat((ref, img1), 1)
+        elif mode==1:
+            imgs0 = torch.cat((img0, ref), 1)
+            imgs1 = torch.cat((ref, img1), 1)
 
-        flow0, _ = self.flownet(imgs0, UHD)
-        flow1, _ = self.flownet(imgs1, UHD)
-        flow0 = flow0[:, :2, :, :]
-        flow1 = flow1[:, 2:, :, :]
+            flow0, _ = self.flownet(imgs0, UHD)
+            flow1, _ = self.flownet(imgs1, UHD)
+            flow0 = flow0[:, :2, :, :]
+            flow1 = flow1[:, 2:, :, :]
 
-        totalflow = torch.cat((flow0, flow1), 1)
-        totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
+            totalflow = torch.cat((flow0, flow1), 1)
+            totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
+            return self.predict(imgs, totalflow, training=False, UHD=UHD)
 
         ### compute flow with pytorch-liteflownet ###
-        
-        # flow0r = liteflow_estimate(ref, img0)
-        # flow0r = torch.transpose(flow0r, 2, 1).unsqueeze(0)
+        elif mode==2:
+            
+            flow0r = liteflow_estimate(ref, img0)
+            flow0r = torch.transpose(flow0r, 2, 1).unsqueeze(0)
 
-        # flowr1 = liteflow_estimate(ref, img1)
-        # flowr1 = (torch.transpose(flowr1, 2, 1)).unsqueeze(0)
+            flowr1 = liteflow_estimate(ref, img1)
+            flowr1 = (torch.transpose(flowr1, 2, 1)).unsqueeze(0)
 
-        # totalflow = torch.cat((flow0r, flowr1),1)
-        # totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)
+            totalflow = torch.cat((flow0r, flowr1),1)
+            totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)
 
-        # totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
-        # print("shape of new flow"+str(totalflow.shape))
+            totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
+            return self.predict(imgs, totalflow, training=False, UHD=UHD)
 
-        return self.predict(imgs, totalflow, training=False, UHD=UHD)
 
     def update(self, imgs, gt, learning_rate=0, mul=1, training=True, flow_gt=None):
         for param_group in self.optimG.param_groups:
@@ -282,4 +282,3 @@ if __name__ == '__main__':
     imgs = torch.cat((img0, img1), 1)
     model = Model()
     model.eval()
-    print(model.inference(imgs).shape)
