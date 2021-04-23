@@ -19,7 +19,8 @@ parser = argparse.ArgumentParser(description='Interpolation for a pair of images
 parser.add_argument('--img', dest='img', nargs=2, required=True)
 parser.add_argument('--ref', required=True)
 parser.add_argument('--output', default="output", type=str, required=False)
-parser.add_argument('--exp', default=4, type=int)
+parser.add_argument('--exp', default=1, type=int)
+parser.add_argument('--mode', default=1, type=int)
 parser.add_argument('--ratio', default=0, type=float, help='inference ratio between two images with 0 - 1 range')
 parser.add_argument('--rthreshold', default=0.02, type=float, help='returns image when actual ratio falls in given range threshold')
 parser.add_argument('--rmaxcycles', default=8, type=int, help='limit max number of bisectional cycles')
@@ -69,7 +70,7 @@ if args.ratio:
         tmp_img1 = img1
         tmp_ref = ref
         for inference_cycle in range(args.rmaxcycles):
-            middle = model.inference(tmp_img0, tmp_img1, tmp_ref)
+            middle = model.inference(tmp_img0, tmp_img1, tmp_ref, mode = args.mode, output= args.output)
             middle_ratio = ( img0_ratio + img1_ratio ) / 2
             if args.ratio - (args.rthreshold / 2) <= middle_ratio <= args.ratio + (args.rthreshold / 2):
                 break
@@ -87,7 +88,7 @@ else:
     for i in range(args.exp):
         tmp = []
         for j in range(len(img_list) - 1):
-            mid = model.inference(img_list[j], img_list[j + 1], ref)
+            mid = model.inference(img_list[j], img_list[j + 1], ref, mode=args.mode, output = args.output)
             tmp.append(img_list[j])
             tmp.append(mid)
         tmp.append(img1)

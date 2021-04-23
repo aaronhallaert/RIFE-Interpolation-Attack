@@ -1,4 +1,6 @@
 from liteflownet.liteflowrun_method import estimate as liteflow_estimate
+from torchvision.utils import save_image
+import cv2
 import PIL
 import torch
 import torch.nn as nn
@@ -177,7 +179,7 @@ class Model:
             torch.save(self.contextnet.state_dict(), '{}/contextnet.pkl'.format(path))
             torch.save(self.fusionnet.state_dict(), '{}/unet.pkl'.format(path))
 
-    def predict(self, imgs, flow, training=True, flow_gt=None, UHD=False):
+    def predict(self, imgs, flow, training=True, flow_gt=None, UHD=False, output=""):
         img0 = imgs[:, :3]
         img1 = imgs[:, 3:]
         if UHD:
@@ -193,18 +195,33 @@ class Model:
         merged_img = warped_img0 * mask + warped_img1 * (1 - mask)
         pred = merged_img + res
         pred = torch.clamp(pred, 0, 1)
+
+
+        if output is not "":
+
+            flow0 = flow[:, :2]
+            flow1 = torch.abs(flow[:, 2:4])
+            save_image(flow0, output+"first_flow.png")
+            save_image(flow1, output+"second_flow.png")
+
+            cv2.imwrite(output + "warped_img0.png", (warped_img0[0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:1080, :1920])
+            cv2.imwrite(output + "warped_img1.png", (warped_img1[0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:1080, :1920])
+            cv2.imwrite(output + "pred.png", (pred[0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:1080, :1920])
+
+
         if training:
             return pred, mask, merged_img, warped_img0, warped_img1, warped_img0_gt, warped_img1_gt
         else:
             return pred
 
-    def inference(self, img0, img1, ref, mode=0, UHD=False):
+    def inference(self, img0, img1, ref, mode=0, UHD=False, output= ""):
         imgs = torch.cat((img0, img1), 1)
 
         ### original flow without reference frame (RIFE) ###
         if mode==0:
             flow, _ = self.flownet(imgs, UHD)
-            return self.predict(imgs, flow, training=False, UHD=UHD)
+            print(flow.shape)
+            return self.predict(imgs, flow, training=False, UHD=UHD, output = output)
 
 
         ### compute flow with reference frame (RIFE) ###
@@ -219,7 +236,7 @@ class Model:
 
             totalflow = torch.cat((flow0, flow1), 1)
             totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
-            return self.predict(imgs, totalflow, training=False, UHD=UHD)
+            return self.predict(imgs, totalflow, training=False, UHD=UHD, output = output)
 
         ### compute flow with pytorch-liteflownet ###
         elif mode==2:
@@ -234,7 +251,7 @@ class Model:
             totalflow = F.interpolate(totalflow, scale_factor=0.5, mode="bilinear", align_corners=False)
 
             totalflow = (torch.transpose(totalflow, 3, 2)).to(device)
-            return self.predict(imgs, totalflow, training=False, UHD=UHD)
+            return self.predict(imgs, totalflow, training=False, UHD=UHD, output=output)
 
 
     def update(self, imgs, gt, learning_rate=0, mul=1, training=True, flow_gt=None):
