@@ -201,8 +201,8 @@ class Model:
 
             flow0 = flow[:, :2]
             flow1 = torch.abs(flow[:, 2:4])
-            save_image(flow0, output+"first_flow.png")
-            save_image(flow1, output+"second_flow.png")
+            save_image(flow0, output+"forward_flow.png")
+            save_image(torch.abs(flow1), output+"backward_flow.png")
 
             cv2.imwrite(output + "warped_img0.png", (warped_img0[0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:1080, :1920])
             cv2.imwrite(output + "warped_img1.png", (warped_img1[0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:1080, :1920])
@@ -229,10 +229,20 @@ class Model:
             imgs0 = torch.cat((img0, ref), 1)
             imgs1 = torch.cat((ref, img1), 1)
 
-            flow0, _ = self.flownet(imgs0, UHD)
-            flow1, _ = self.flownet(imgs1, UHD)
-            flow0 = flow0[:, :2, :, :]
-            flow1 = flow1[:, 2:, :, :]
+            flow0_full, _ = self.flownet(imgs0, UHD)
+            flow1_full, _ = self.flownet(imgs1, UHD)
+
+            flow0 = flow0_full[:, :2, :, :]
+
+            flow0_1 = flow0_full[:, 2:, :, :]
+            save_image(flow0, output+"first_forward_flow.png")
+            save_image(torch.abs(flow0_1), output+"first_backward_flow.png")
+
+            flow1 = flow1_full[:, 2:, :, :]
+
+            flow1_1 = flow1_full[:, :2, :, :]
+            save_image(torch.abs(flow1), output+"second_backward_flow.png")
+            save_image(flow1_1, output+"second_forward_flow.png")
 
             totalflow = torch.cat((flow0, flow1), 1)
             totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2
