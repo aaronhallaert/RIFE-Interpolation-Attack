@@ -5,6 +5,10 @@ from torch.nn import functional as F
 from model.RIFE_HDv2 import Model
 import warnings
 
+            
+def write_image(path, image, other):
+    cv2.imwrite(path, image, other)
+
 def interpolate_images(img0_path, img1_path, ref_path, output_path, exp, mode=0, ratio=0, rthreshold=0.02 ,rmaxcycles=8):
     warnings.filterwarnings("ignore")
 
@@ -96,11 +100,13 @@ def interpolate_images(img0_path, img1_path, ref_path, output_path, exp, mode=0,
 
     # only output the interpolated frames
     for idx in range(0, 3):
-        if img0_path.endswith('.exr') and img1_path.endswith('.exr'):
-            cv2.imwrite(output_path+'/{0:03d}.exr'.format(frames[idx]), (img_list[idx][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
-        else:
-            if not os.path.isfile(output_path+'/{0:03d}.png'.format(i)):
-                cv2.imwrite(output_path+'/{0:03d}.png'.format(frames[idx]), (img_list[idx][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
+        # if img0_path.endswith('.exr') and img1_path.endswith('.exr'):
+            # cv2.imwrite(output_path+'/{0:03d}.exr'.format(frames[idx]), (img_list[idx][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
+        # else:
+            # # if idx != 0:
+        if not os.path.isfile(output_path+'/{0:03d}.png'.format(frames[idx])):
+            cv2.imwrite(output_path+'/{0:03d}.png'.format(frames[idx]), (img_list[idx][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
+                # cv2.imwrite(output_path+'/{0:03d}.png'.format(frames[idx]), (img_list[idx][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
                 # subprocess.call(['ffmpeg', 
                 #                  "-i", output_path+'/img{0:03d}.png'.format(frames[idx]),
                 #                  "-pix_fmt", "yuv420p",

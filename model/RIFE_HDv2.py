@@ -220,7 +220,7 @@ class Model:
         ### original flow without reference frame (RIFE) ###
         if mode==0:
             flow, _ = self.flownet(imgs, UHD)
-            print(flow.shape)
+            # print(flow.shape)
             return self.predict(imgs, flow, training=False, UHD=UHD, output = output)
 
 
@@ -234,15 +234,15 @@ class Model:
 
             flow0 = flow0_full[:, :2, :, :]
 
-            flow0_1 = flow0_full[:, 2:, :, :]
-            save_image(flow0, output+"first_forward_flow.png")
-            save_image(torch.abs(flow0_1), output+"first_backward_flow.png")
+            # flow0_1 = flow0_full[:, 2:, :, :]
+            # save_image(flow0, output+"first_forward_flow.png")
+            # save_image(torch.abs(flow0_1), output+"first_backward_flow.png")
 
             flow1 = flow1_full[:, 2:, :, :]
 
-            flow1_1 = flow1_full[:, :2, :, :]
-            save_image(torch.abs(flow1), output+"second_backward_flow.png")
-            save_image(flow1_1, output+"second_forward_flow.png")
+            # flow1_1 = flow1_full[:, :2, :, :]
+            # save_image(torch.abs(flow1), output+"second_backward_flow.png")
+            # save_image(flow1_1, output+"second_forward_flow.png")
 
             totalflow = torch.cat((flow0, flow1), 1)
             totalflow = F.interpolate(totalflow, scale_factor=1, mode="bilinear", align_corners=False)*2

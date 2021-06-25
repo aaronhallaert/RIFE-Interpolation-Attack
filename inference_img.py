@@ -106,12 +106,13 @@ last_frame = int(str(os.path.basename(os.path.splitext(args.img[1])[0])).replace
 frames= [first_frame, middle_frame, last_frame]
 
 # only output the interpolated frames
-for idx in range(0, 3):
+for idx in range(1, 3):
     if args.img[0].endswith('.exr') and args.img[1].endswith('.exr'):
         cv2.imwrite(args.output+'/{0:03d}.exr'.format(frames[idx]), (img_list[idx][0]).cpu().numpy().transpose(1, 2, 0)[:h, :w], [cv2.IMWRITE_EXR_TYPE, cv2.IMWRITE_EXR_TYPE_HALF])
     else:
-        if not os.path.isfile(args.output+'/{0:03d}.png'.format(i)):
-            cv2.imwrite(args.output+'/{0:03d}.png'.format(frames[idx]), (img_list[idx][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
+        # if idx != 0:
+        # if not os.path.isfile(args.output+'/{0:03d}.png'.format(frames[idx])):
+        cv2.imwrite(args.output+'/{0:03d}.png'.format(frames[idx]), (img_list[idx][0] * 255).byte().cpu().numpy().transpose(1, 2, 0)[:h, :w])
             # subprocess.call(['ffmpeg', 
             #                  "-i", args.output+'/img{0:03d}.png'.format(frames[idx]),
             #                  "-pix_fmt", "yuv420p",
